@@ -2,6 +2,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
 use tauri::{
+    image::Image,
     menu::{Menu, MenuItem},
     tray::TrayIconBuilder,
     Emitter, Manager,
@@ -20,6 +21,7 @@ enum TimerCommand {
 
 struct TimerState {
     cmd: TimerCommand,
+    last_title: String,
     pause_item: MenuItem<tauri::Wry>,
     restart_item: MenuItem<tauri::Wry>,
 }
@@ -90,8 +92,11 @@ fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl) {
             }
 
             let title = format_time(remaining);
+            let ctl_c = ctl.clone();
             let app_c = app.clone();
             app.run_on_main_thread(move || {
+                let mut state = ctl_c.lock().unwrap();
+                state.last_title = title.clone();
                 let tray = app_c.tray_by_id("main").expect("tray");
                 tray.set_title(Some(&title)).ok();
             })
@@ -117,19 +122,16 @@ pub fn run() {
 
             let ctl: TimerCtl = Arc::new(Mutex::new(TimerState {
                 cmd: TimerCommand::Stop,
+                last_title: String::new(),
                 pause_item: pause_i.clone(),
                 restart_item: restart_i.clone(),
             }));
             app.manage(ctl.clone());
 
             let ctl_for_tray = ctl.clone();
-            let _tray = TrayIconBuilder::with_id("main")
+            let tray = TrayIconBuilder::with_id("main")
                 .tooltip("Focus Timer")
-                .icon(
-                    app.default_window_icon()
-                        .cloned()
-                        .expect("app icon"),
-                )
+                .icon(Image::new_owned(vec![0; 4], 1, 1))
                 .menu(&menu)
                 .show_menu_on_left_click(true)
                 .on_menu_event(move |_app, event| match event.id().as_ref() {
@@ -139,19 +141,27 @@ pub fn run() {
                         if state.cmd == TimerCommand::Pause {
                             state.cmd = TimerCommand::Run;
                             let _ = state.pause_item.set_text("Pause");
+                            if let Some(tray) = _app.tray_by_id("main") {
+                                tray.set_title(Some(&state.last_title)).ok();
+                            }
                         } else if state.cmd == TimerCommand::Run {
                             state.cmd = TimerCommand::Pause;
                             let _ = state.pause_item.set_text("Resume");
+                            if let Some(tray) = _app.tray_by_id("main") {
+                                tray.set_title(Some(&format!("⏸ {}", state.last_title))).ok();
+                            }
                         }
                     }
                     "restart" => {
                         let mut state = ctl_for_tray.lock().unwrap();
                         state.cmd = TimerCommand::Restart;
                         let _ = state.pause_item.set_text("Pause");
+                        state.last_title = format_time(FOCUS_SECONDS);
                     }
                     _ => {}
                 })
                 .build(app)?;
+            tray.set_icon(None)?;
 
             Ok(())
         })
