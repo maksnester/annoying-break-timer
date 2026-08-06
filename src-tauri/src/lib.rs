@@ -76,6 +76,7 @@ fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl) {
                     let tray = app_c.tray_by_id("main").expect("tray");
                     tray.set_title(Some("Time's up")).ok();
                     tray.set_tooltip(Some("Focus timer finished")).ok();
+                    tray.set_visible(true).ok();
 
                     let state = ctl_c.lock().unwrap();
                     let _ = state.pause_item.set_enabled(false);
@@ -162,6 +163,8 @@ pub fn run() {
                 })
                 .build(app)?;
             tray.set_icon(None)?;
+            tray.set_title(Some("Focus Timer"))?;
+            tray.set_visible(true)?;
 
             Ok(())
         })
