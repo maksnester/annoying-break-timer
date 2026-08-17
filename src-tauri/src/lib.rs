@@ -34,6 +34,57 @@ fn format_time(total_seconds: u64) -> String {
     format!("{:02}:{:02}", minutes, seconds)
 }
 
+#[cfg(target_os = "macos")]
+tauri_nspanel::tauri_panel! {
+    panel!(TimerPanel {
+        config: {
+            can_become_key_window: true,
+            is_floating_panel: true,
+        }
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn make_window_appear_everywhere(window: &tauri::WebviewWindow) {
+    use tauri_nspanel::{CollectionBehavior, PanelLevel, StyleMask, WebviewWindowExt};
+
+    if let Ok(panel) = window.to_panel::<TimerPanel>() {
+        panel.set_level(PanelLevel::Floating.value());
+        panel.set_collection_behavior(
+            CollectionBehavior::new()
+                .full_screen_auxiliary()
+                .move_to_active_space()
+                .value(),
+        );
+        panel.set_style_mask(StyleMask::empty().nonactivating_panel().into());
+    }
+}
+
+// `MoveToActiveSpace` only relocates the panel to the active Space when it is
+// re-ordered front (macOS treats it and `CanJoinAllSpaces` as mutually exclusive,
+// so we can't just be omnipresent). To make the panel follow the user across
+// Space switches - including into a fullscreen app's own Space - while it's
+// visible, we keep nudging it back to front on a short interval.
+#[cfg(target_os = "macos")]
+fn keep_panel_on_active_space(app: tauri::AppHandle) {
+    use tauri_nspanel::ManagerExt;
+
+    thread::spawn(move || loop {
+        thread::sleep(Duration::from_millis(400));
+        let app_c = app.clone();
+        app.run_on_main_thread(move || {
+            if let Some(window) = app_c.get_webview_window("main") {
+                if window.is_visible().unwrap_or(false) {
+                    if let Ok(panel) = app_c.get_webview_panel("main") {
+                        panel.order_front_regardless();
+                    }
+                }
+            }
+        })
+        .ok();
+    });
+}
+
 fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl) {
     let window = app.get_webview_window("main").expect("main window");
     window.hide().expect("hide window");
@@ -113,9 +164,19 @@ fn start_timer(app: tauri::AppHandle, state: tauri::State<'_, TimerCtl>) {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![start_timer])
+    #[allow(unused_mut)]
+    let mut builder = tauri::Builder::default().invoke_handler(tauri::generate_handler![start_timer]);
+
+    #[cfg(target_os = "macos")]
+    {
+        builder = builder.plugin(tauri_nspanel::init());
+    }
+
+    builder
         .setup(|app| {
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(tauri::ActivationPolicy::Accessory);
+
             let pause_i = MenuItem::with_id(app, "pause", "Pause", false, None::<&str>)?;
             let restart_i = MenuItem::with_id(app, "restart", "Restart", false, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -165,6 +226,12 @@ pub fn run() {
             tray.set_icon(None)?;
             tray.set_title(Some("Focus Timer"))?;
             tray.set_visible(true)?;
+
+            #[cfg(target_os = "macos")]
+            {
+                make_window_appear_everywhere(&app.get_webview_window("main").expect("main window"));
+                keep_panel_on_active_space(app.handle().clone());
+            }
 
             Ok(())
         })

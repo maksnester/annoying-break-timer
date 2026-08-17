@@ -18,6 +18,7 @@
         "visible": true,
         "focus": true,
         "alwaysOnTop": true,
+        "visibleOnAllWorkspaces": true,
         "resizable": false,
         "minimizable": false,
         "maximizable": false,
