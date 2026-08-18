@@ -7,9 +7,12 @@ use tauri::{
     AppHandle, Manager,
 };
 
-use crate::timer::{format_time, TimerCommand, TimerCtl, TimerState, FOCUS_SECONDS};
+use crate::config::Settings;
+use crate::timer::{format_time, TimerCommand, TimerCtl, TimerState};
 
 pub fn setup_tray(app: &tauri::App) -> tauri::Result<TrayIcon> {
+    let settings = Settings::load(&app.handle());
+
     let pause_i = MenuItem::with_id(app, "pause", "Pause", false, None::<&str>)?;
     let restart_i = MenuItem::with_id(app, "restart", "Restart", false, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
@@ -18,6 +21,7 @@ pub fn setup_tray(app: &tauri::App) -> tauri::Result<TrayIcon> {
     let ctl: TimerCtl = Arc::new(Mutex::new(TimerState {
         cmd: TimerCommand::Stop,
         last_title: String::new(),
+        focus_minutes: settings.focus_minutes,
         pause_item: pause_i.clone(),
         restart_item: restart_i.clone(),
     }));
@@ -67,5 +71,5 @@ fn request_restart(ctl: &TimerCtl) {
     let mut state = ctl.lock().unwrap();
     state.cmd = TimerCommand::Restart;
     let _ = state.pause_item.set_text("Pause");
-    state.last_title = format_time(FOCUS_SECONDS);
+    state.last_title = format_time(state.focus_minutes * 60);
 }

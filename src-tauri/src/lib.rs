@@ -1,3 +1,4 @@
+mod config;
 mod timer;
 mod tray;
 
@@ -5,12 +6,13 @@ mod tray;
 mod panel;
 
 use tauri::Manager;
+use config::{get_settings, set_settings};
 use timer::start_timer;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     #[allow(unused_mut)]
-    let mut builder = tauri::Builder::default().invoke_handler(tauri::generate_handler![start_timer]);
+    let mut builder = tauri::Builder::default().invoke_handler(tauri::generate_handler![start_timer, get_settings, set_settings]);
 
     #[cfg(target_os = "macos")]
     {

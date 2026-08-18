@@ -1,10 +1,9 @@
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
+use crate::config::Settings;
 use tauri::{menu::MenuItem, Emitter, Manager};
 
-pub const FOCUS_MINUTES: u64 = 25;
-pub const FOCUS_SECONDS: u64 = FOCUS_MINUTES * 60;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TimerCommand {
@@ -22,12 +21,12 @@ pub enum TickOutcome {
     Continuing { remaining: u64, cmd: TimerCommand },
 }
 
-pub fn advance_tick(remaining: u64, cmd: TimerCommand) -> TickOutcome {
+pub fn advance_tick(remaining: u64, cmd: TimerCommand, focus_seconds: u64) -> TickOutcome {
     match cmd {
         TimerCommand::Stop => TickOutcome::Stopped,
         TimerCommand::Pause => TickOutcome::Paused,
         TimerCommand::Restart => TickOutcome::Continuing {
-            remaining: FOCUS_SECONDS,
+            remaining: focus_seconds,
             cmd: TimerCommand::Run,
         },
         TimerCommand::Run => {
@@ -47,6 +46,7 @@ pub fn advance_tick(remaining: u64, cmd: TimerCommand) -> TickOutcome {
 pub struct TimerState {
     pub cmd: TimerCommand,
     pub last_title: String,
+    pub focus_minutes: u64,
     pub pause_item: MenuItem<tauri::Wry>,
     pub restart_item: MenuItem<tauri::Wry>,
 }
@@ -59,30 +59,32 @@ pub fn format_time(total_seconds: u64) -> String {
     format!("{:02}:{:02}", minutes, seconds)
 }
 
-fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl) {
+fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl, focus_minutes: u64) {
+    let focus_seconds = focus_minutes * 60;
     let window = app.get_webview_window("main").expect("main window");
     window.hide().expect("hide window");
 
     {
         let mut state = ctl.lock().unwrap();
         state.cmd = TimerCommand::Run;
+        state.focus_minutes = focus_minutes;
         let _ = state.pause_item.set_text("Pause");
         let _ = state.pause_item.set_enabled(true);
         let _ = state.restart_item.set_enabled(true);
     }
 
     let tray = app.tray_by_id("main").expect("tray");
-    tray.set_title(Some(&format_time(FOCUS_SECONDS))).ok();
+    tray.set_title(Some(&format_time(focus_seconds))).ok();
 
     thread::spawn(move || {
         let tick = Duration::from_secs(1);
-        let mut remaining = FOCUS_SECONDS;
+        let mut remaining = focus_seconds;
 
         loop {
             thread::sleep(tick);
 
             let cmd = ctl.lock().unwrap().cmd.clone();
-            match advance_tick(remaining, cmd.clone()) {
+            match advance_tick(remaining, cmd.clone(), focus_seconds) {
                 TickOutcome::Stopped => break,
                 TickOutcome::Paused => continue,
                 TickOutcome::Finished => {
@@ -108,9 +110,9 @@ fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl) {
                     break;
                 }
                 TickOutcome::Continuing {
-                    remaining: new_remaining,
-                    cmd: new_cmd,
-                } => {
+                remaining: new_remaining,
+                cmd: new_cmd,
+            } => {
                     remaining = new_remaining;
                     if new_cmd != cmd {
                         ctl.lock().unwrap().cmd = new_cmd;
@@ -134,12 +136,15 @@ fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl) {
 
 #[tauri::command]
 pub fn start_timer(app: tauri::AppHandle, state: tauri::State<'_, TimerCtl>) {
-    spawn_timer(app, state.inner().clone());
+    let settings = Settings::load(&app);
+    spawn_timer(app, state.inner().clone(), settings.focus_minutes);
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const FOCUS_SECONDS: u64 = 25 * 60;
 
     #[test]
     fn format_time_pads_minutes_and_seconds() {
@@ -151,18 +156,18 @@ mod tests {
 
     #[test]
     fn stop_ends_the_countdown() {
-        assert_eq!(advance_tick(100, TimerCommand::Stop), TickOutcome::Stopped);
+        assert_eq!(advance_tick(100, TimerCommand::Stop, FOCUS_SECONDS), TickOutcome::Stopped);
     }
 
     #[test]
     fn pause_keeps_the_remaining_time_unchanged() {
-        assert_eq!(advance_tick(100, TimerCommand::Pause), TickOutcome::Paused);
+        assert_eq!(advance_tick(100, TimerCommand::Pause, FOCUS_SECONDS), TickOutcome::Paused);
     }
 
     #[test]
     fn restart_resets_remaining_time_and_resumes_running() {
         assert_eq!(
-            advance_tick(3, TimerCommand::Restart),
+            advance_tick(3, TimerCommand::Restart, FOCUS_SECONDS),
             TickOutcome::Continuing {
                 remaining: FOCUS_SECONDS,
                 cmd: TimerCommand::Run,
@@ -173,7 +178,7 @@ mod tests {
     #[test]
     fn run_decrements_remaining_time_by_one_second() {
         assert_eq!(
-            advance_tick(10, TimerCommand::Run),
+            advance_tick(10, TimerCommand::Run, FOCUS_SECONDS),
             TickOutcome::Continuing {
                 remaining: 9,
                 cmd: TimerCommand::Run,
@@ -183,6 +188,6 @@ mod tests {
 
     #[test]
     fn run_finishes_when_the_last_second_elapses() {
-        assert_eq!(advance_tick(1, TimerCommand::Run), TickOutcome::Finished);
+        assert_eq!(advance_tick(1, TimerCommand::Run, FOCUS_SECONDS), TickOutcome::Finished);
     }
 }
