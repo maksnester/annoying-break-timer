@@ -11,12 +11,42 @@ use tauri::{
 const FOCUS_MINUTES: u64 = 25;
 const FOCUS_SECONDS: u64 = FOCUS_MINUTES * 60;
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, Debug, PartialEq)]
 enum TimerCommand {
     Run,
     Pause,
     Restart,
     Stop,
+}
+
+#[derive(Debug, PartialEq)]
+enum TickOutcome {
+    Stopped,
+    Paused,
+    Finished,
+    Continuing { remaining: u64, cmd: TimerCommand },
+}
+
+fn advance_tick(remaining: u64, cmd: TimerCommand) -> TickOutcome {
+    match cmd {
+        TimerCommand::Stop => TickOutcome::Stopped,
+        TimerCommand::Pause => TickOutcome::Paused,
+        TimerCommand::Restart => TickOutcome::Continuing {
+            remaining: FOCUS_SECONDS,
+            cmd: TimerCommand::Run,
+        },
+        TimerCommand::Run => {
+            let remaining = remaining.saturating_sub(1);
+            if remaining == 0 {
+                TickOutcome::Finished
+            } else {
+                TickOutcome::Continuing {
+                    remaining,
+                    cmd: TimerCommand::Run,
+                }
+            }
+        }
+    }
 }
 
 struct TimerState {
@@ -108,51 +138,52 @@ fn spawn_timer(app: tauri::AppHandle, ctl: TimerCtl) {
             thread::sleep(tick);
 
             let cmd = ctl.lock().unwrap().cmd.clone();
-            match cmd {
-                TimerCommand::Stop => break,
-                TimerCommand::Pause => continue,
-                TimerCommand::Restart => {
-                    remaining = FOCUS_SECONDS;
-                    ctl.lock().unwrap().cmd = TimerCommand::Run;
+            match advance_tick(remaining, cmd.clone()) {
+                TickOutcome::Stopped => break,
+                TickOutcome::Paused => continue,
+                TickOutcome::Finished => {
+                    let ctl_c = ctl.clone();
+                    let app_c = app.clone();
+                    app.run_on_main_thread(move || {
+                        let tray = app_c.tray_by_id("main").expect("tray");
+                        tray.set_title(Some("Time's up")).ok();
+                        tray.set_tooltip(Some("Focus timer finished")).ok();
+                        tray.set_visible(true).ok();
+
+                        let state = ctl_c.lock().unwrap();
+                        let _ = state.pause_item.set_enabled(false);
+                        let _ = state.restart_item.set_enabled(false);
+
+                        let window = app_c.get_webview_window("main").expect("main window");
+                        window.show().ok();
+                        window.set_focus().ok();
+
+                        let _ = app_c.emit("timer_finished", ());
+                    })
+                    .ok();
+                    break;
                 }
-                TimerCommand::Run => {
-                    remaining = remaining.saturating_sub(1);
+                TickOutcome::Continuing {
+                    remaining: new_remaining,
+                    cmd: new_cmd,
+                } => {
+                    remaining = new_remaining;
+                    if new_cmd != cmd {
+                        ctl.lock().unwrap().cmd = new_cmd;
+                    }
+
+                    let title = format_time(remaining);
+                    let ctl_c = ctl.clone();
+                    let app_c = app.clone();
+                    app.run_on_main_thread(move || {
+                        let mut state = ctl_c.lock().unwrap();
+                        state.last_title = title.clone();
+                        let tray = app_c.tray_by_id("main").expect("tray");
+                        tray.set_title(Some(&title)).ok();
+                    })
+                    .ok();
                 }
             }
-
-            if remaining == 0 {
-                let ctl_c = ctl.clone();
-                let app_c = app.clone();
-                app.run_on_main_thread(move || {
-                    let tray = app_c.tray_by_id("main").expect("tray");
-                    tray.set_title(Some("Time's up")).ok();
-                    tray.set_tooltip(Some("Focus timer finished")).ok();
-                    tray.set_visible(true).ok();
-
-                    let state = ctl_c.lock().unwrap();
-                    let _ = state.pause_item.set_enabled(false);
-                    let _ = state.restart_item.set_enabled(false);
-
-                    let window = app_c.get_webview_window("main").expect("main window");
-                    window.show().ok();
-                    window.set_focus().ok();
-
-                    let _ = app_c.emit("timer_finished", ());
-                })
-                .ok();
-                break;
-            }
-
-            let title = format_time(remaining);
-            let ctl_c = ctl.clone();
-            let app_c = app.clone();
-            app.run_on_main_thread(move || {
-                let mut state = ctl_c.lock().unwrap();
-                state.last_title = title.clone();
-                let tray = app_c.tray_by_id("main").expect("tray");
-                tray.set_title(Some(&title)).ok();
-            })
-            .ok();
         }
     });
 }
@@ -237,4 +268,54 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn format_time_pads_minutes_and_seconds() {
+        assert_eq!(format_time(0), "00:00");
+        assert_eq!(format_time(5), "00:05");
+        assert_eq!(format_time(65), "01:05");
+        assert_eq!(format_time(FOCUS_SECONDS), "25:00");
+    }
+
+    #[test]
+    fn stop_ends_the_countdown() {
+        assert_eq!(advance_tick(100, TimerCommand::Stop), TickOutcome::Stopped);
+    }
+
+    #[test]
+    fn pause_keeps_the_remaining_time_unchanged() {
+        assert_eq!(advance_tick(100, TimerCommand::Pause), TickOutcome::Paused);
+    }
+
+    #[test]
+    fn restart_resets_remaining_time_and_resumes_running() {
+        assert_eq!(
+            advance_tick(3, TimerCommand::Restart),
+            TickOutcome::Continuing {
+                remaining: FOCUS_SECONDS,
+                cmd: TimerCommand::Run,
+            }
+        );
+    }
+
+    #[test]
+    fn run_decrements_remaining_time_by_one_second() {
+        assert_eq!(
+            advance_tick(10, TimerCommand::Run),
+            TickOutcome::Continuing {
+                remaining: 9,
+                cmd: TimerCommand::Run,
+            }
+        );
+    }
+
+    #[test]
+    fn run_finishes_when_the_last_second_elapses() {
+        assert_eq!(advance_tick(1, TimerCommand::Run), TickOutcome::Finished);
+    }
 }
