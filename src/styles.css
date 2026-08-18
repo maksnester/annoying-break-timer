@@ -25,37 +25,37 @@ body {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 24px;
+  padding: 36px;
 }
 
 h1 {
-  margin: 0 0 8px;
-  font-size: 20px;
+  margin: 0 0 12px;
+  font-size: 30px;
   font-weight: 600;
   color: #111;
 }
 
 #timer-display {
-  font-size: 72px;
+  font-size: 108px;
   font-weight: 300;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-  margin: 16px 0;
+  margin: 24px 0;
   color: #000;
 }
 
 #status {
-  margin: 0 0 24px;
-  font-size: 14px;
+  margin: 0 0 36px;
+  font-size: 21px;
   color: #555;
-  min-height: 20px;
+  min-height: 30px;
 }
 
 button {
   border: none;
-  border-radius: 10px;
-  padding: 12px 28px;
-  font-size: 16px;
+  border-radius: 15px;
+  padding: 18px 42px;
+  font-size: 24px;
   font-weight: 600;
   font-family: inherit;
   color: #fff;
@@ -78,19 +78,23 @@ button:disabled {
 }
 
 .header {
+  position: relative;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   width: 100%;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 #settings-btn {
+  position: absolute;
+  top: 0;
+  right: 0;
   background: transparent;
   color: #555;
-  padding: 4px 8px;
-  font-size: 20px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 30px;
+  border-radius: 9px;
 }
 
 #settings-btn:hover {
@@ -101,7 +105,7 @@ button:disabled {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
 }
 
 #settings-view[hidden] {
@@ -109,17 +113,17 @@ button:disabled {
 }
 
 #settings-view label {
-  font-size: 14px;
+  font-size: 21px;
   color: #555;
 }
 
 #minutes-input {
-  width: 120px;
-  padding: 10px 14px;
-  font-size: 18px;
+  width: 180px;
+  padding: 15px 21px;
+  font-size: 27px;
   text-align: center;
   border: 1px solid #ccc;
-  border-radius: 8px;
+  border-radius: 12px;
 }
 
 @media (prefers-color-scheme: dark) {
