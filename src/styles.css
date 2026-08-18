@@ -87,18 +87,22 @@ button:disabled {
 }
 
 #settings-btn {
-  position: absolute;
-  top: 0;
-  right: 0;
+  position: fixed;
+  top: 4px;
+  right: 4px;
   background: transparent;
   color: #555;
-  padding: 6px 12px;
+  padding: 6px 16px;
   font-size: 30px;
   border-radius: 9px;
 }
 
 #settings-btn:hover {
   background: rgba(0, 0, 0, 0.1);
+}
+
+#settings-btn:active {
+  transform: scale(0.95);
 }
 
 #settings-view {
