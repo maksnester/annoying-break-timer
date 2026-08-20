@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "macos-timer",
+  "productName": "annoying-break-timer",
   "version": "0.1.0",
-  "identifier": "com.maksim.macostimer",
+  "identifier": "com.maksim.annoyingbreaktimer",
   "build": {
     "frontendDist": "../src"
   },

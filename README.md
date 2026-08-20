@@ -1,6 +1,6 @@
-# macOS timer app
+# Annoying Break Timer
 
-a native-feeling macOS timer app with **Tauri** (Rust backend + vanilla JS frontend).
+a native-feeling macOS break timer app with **Tauri** (Rust backend + vanilla JS frontend).
 
 ### What it does
 - On launch a centered, borderless, always-on-top window appears with a **25:00** display and a **Start 25 min** button.
@@ -10,8 +10,8 @@ a native-feeling macOS timer app with **Tauri** (Rust backend + vanilla JS front
 - The tray icon menu has a **Quit** option to exit the app at any time.
 
 ### Built artifacts
-- App bundle: [/Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/macos/macos-timer.app](cci:9://file:///Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/macos/macos-timer.app:0:0-0:0)
-- Installer DMG: [/Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/dmg/macos-timer_0.1.0_aarch64.dmg](cci:7://file:///Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/dmg/macos-timer_0.1.0_aarch64.dmg:0:0-0:0)
+- App bundle: [/Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/macos/annoying-break-timer.app](cci:9://file:///Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/macos/annoying-break-timer.app:0:0-0:0)
+- Installer DMG: [/Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/dmg/annoying-break-timer_0.1.0_aarch64.dmg](cci:7://file:///Users/maksim.nesterenko/projects/macos-timer/src-tauri/target/release/bundle/dmg/annoying-break-timer_0.1.0_aarch64.dmg:0:0-0:0)
 
 Because the app is unsigned, you may need to right-click it and choose **Open** the first time.
 

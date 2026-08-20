@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    macos_timer_lib::run()
+    annoying_break_timer_lib::run()
 }
