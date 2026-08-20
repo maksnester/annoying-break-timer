@@ -23,7 +23,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   text-align: center;
   padding: 36px;
 }
@@ -84,6 +84,7 @@ button:disabled {
   align-items: center;
   width: 100%;
   margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 #settings-btn {
@@ -105,20 +106,32 @@ button:disabled {
   transform: scale(0.95);
 }
 
-#settings-view {
+.view {
+  width: 100%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
 }
 
-#settings-view[hidden] {
+.view[hidden] {
   display: none;
+}
+
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
 }
 
 #settings-view label {
   font-size: 21px;
   color: #555;
+  display: block;
+  margin-bottom: 12px;
 }
 
 #minutes-input {
