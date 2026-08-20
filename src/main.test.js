@@ -113,7 +113,7 @@ describe("timer_finished event", () => {
     expect(document.querySelector("#status").textContent).toBe(
       "Time's up! Start another session.",
     );
-    expect(startBtn.textContent).toBe("Start another 25 min");
+    expect(startBtn.textContent).toBe("Start 25 min");
     expect(startBtn.disabled).toBe(false);
   });
 });

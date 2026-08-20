@@ -54,7 +54,6 @@ startBtn.addEventListener("click", async () => {
 listen("timer_finished", () => {
   updateDisplay();
   statusEl.textContent = "Time's up! Start another session.";
-  startBtn.textContent = `Start another ${focusMinutes} min`;
   startBtn.disabled = false;
 });
 
