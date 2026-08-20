@@ -1,27 +1,13 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-function renderApp() {
-  document.body.innerHTML = `
-    <main class="container">
-      <div id="main-view" class="view">
-        <div class="header">
-          <h1 id="title">Focus Timer</h1>
-          <button id="settings-btn" type="button" aria-label="Settings">⚙</button>
-        </div>
-        <div id="timer-display">25:00</div>
-        <p id="status">Start a 25-minute focus session.</p>
-        <button id="start-btn" class="action-btn" type="button">Start 25 min</button>
-      </div>
+const indexHtmlPath = join(import.meta.dirname, "index.html");
+const indexHtml = readFileSync(indexHtmlPath, "utf-8");
+const bodyContent = indexHtml.match(/<body>([\s\S]*)<\/body>/)[1];
 
-      <div id="settings-view" class="view" hidden>
-        <button id="back-btn" class="corner-btn" type="button" aria-label="Back">←</button>
-        <h1>Settings</h1>
-        <label for="minutes-input">Focus minutes</label>
-        <input id="minutes-input" type="number" min="1" value="25" />
-        <button id="save-btn" class="action-btn" type="button">Save</button>
-      </div>
-    </main>
-  `;
+function renderApp() {
+  document.body.innerHTML = bodyContent;
 }
 
 let invokeMock;
