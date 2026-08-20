@@ -13,6 +13,15 @@ Written with **Tauri** (Rust backend + vanilla JS frontend).
 - The tray icon menu has a **Quit** option to exit the app at any time.
 - You can customize the timer duration by clicking the cogwheel button on the main screen.
 
+### Screenshots
+
+#### Main screen
+
+![Main window](doc/main.png)
+
+#### Tray
+![Tray icon](doc/tray.png)
+
 ### Built artifacts
 - App bundle: `./src-tauri/target/release/bundle/macos/annoying-break-timer.app`
 - Installer DMG: `./src-tauri/target/release/bundle/dmg/annoying-break-timer_0.1.0_aarch64.dmg`
