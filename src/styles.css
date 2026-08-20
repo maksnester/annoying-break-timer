@@ -77,6 +77,18 @@ button:disabled {
   cursor: not-allowed;
 }
 
+.action-btn {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  min-width: 260px;
+}
+
+.action-btn:active {
+  transform: translateX(-50%) scale(0.98);
+}
+
 .header {
   position: relative;
   display: flex;
@@ -125,6 +137,7 @@ button:disabled {
   align-items: center;
   justify-content: center;
   width: 100%;
+  padding-bottom: 96px;
 }
 
 #settings-view label {

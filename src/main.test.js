@@ -10,14 +10,14 @@ function renderApp() {
         </div>
         <div id="timer-display">25:00</div>
         <p id="status">Start a 25-minute focus session.</p>
-        <button id="start-btn" type="button">Start 25 min</button>
+        <button id="start-btn" class="action-btn" type="button">Start 25 min</button>
       </div>
 
       <div id="settings-view" class="view" hidden>
         <h1>Settings</h1>
         <label for="minutes-input">Focus minutes</label>
         <input id="minutes-input" type="number" min="1" value="25" />
-        <button id="save-btn" type="button">Save</button>
+        <button id="save-btn" class="action-btn" type="button">Save</button>
       </div>
     </main>
   `;
