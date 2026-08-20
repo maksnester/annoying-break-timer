@@ -99,7 +99,7 @@ button:disabled {
   flex-shrink: 0;
 }
 
-#settings-btn {
+.corner-btn {
   position: fixed;
   top: 4px;
   right: 4px;
@@ -110,11 +110,11 @@ button:disabled {
   border-radius: 9px;
 }
 
-#settings-btn:hover {
+.corner-btn:hover {
   background: rgba(0, 0, 0, 0.1);
 }
 
-#settings-btn:active {
+.corner-btn:active {
   transform: scale(0.95);
 }
 
@@ -174,11 +174,11 @@ button:disabled {
     color: #aaa;
   }
 
-  #settings-btn {
+  .corner-btn {
     color: #aaa;
   }
 
-  #settings-btn:hover {
+  .corner-btn:hover {
     background: rgba(255, 255, 255, 0.15);
   }
 

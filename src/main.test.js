@@ -14,6 +14,7 @@ function renderApp() {
       </div>
 
       <div id="settings-view" class="view" hidden>
+        <button id="back-btn" class="corner-btn" type="button" aria-label="Back">←</button>
         <h1>Settings</h1>
         <label for="minutes-input">Focus minutes</label>
         <input id="minutes-input" type="number" min="1" value="25" />
@@ -96,6 +97,22 @@ describe("settings", () => {
     expect(document.querySelector("#settings-view").hidden).toBe(true);
     expect(document.querySelector("#timer-display").textContent).toBe("30:00");
     expect(document.querySelector("#start-btn").textContent).toBe("Start 30 min");
+  });
+
+  it("discards changes and returns to the main view when back is clicked", async () => {
+    const settingsBtn = document.querySelector("#settings-btn");
+    const backBtn = document.querySelector("#back-btn");
+    const minutesInput = document.querySelector("#minutes-input");
+
+    settingsBtn.click();
+    minutesInput.value = "45";
+    backBtn.click();
+
+    expect(invokeMock).not.toHaveBeenCalledWith("set_settings", expect.anything());
+    expect(document.querySelector("#main-view").hidden).toBe(false);
+    expect(document.querySelector("#settings-view").hidden).toBe(true);
+    expect(document.querySelector("#timer-display").textContent).toBe("25:00");
+    expect(document.querySelector("#start-btn").textContent).toBe("Start 25 min");
   });
 });
 

@@ -9,6 +9,7 @@ const startBtn = document.querySelector("#start-btn");
 const settingsBtn = document.querySelector("#settings-btn");
 const minutesInput = document.querySelector("#minutes-input");
 const saveBtn = document.querySelector("#save-btn");
+const backBtn = document.querySelector("#back-btn");
 
 let focusMinutes = 25;
 
@@ -23,6 +24,11 @@ settingsBtn.addEventListener("click", () => {
   minutesInput.value = focusMinutes;
   mainView.hidden = true;
   settingsView.hidden = false;
+});
+
+backBtn.addEventListener("click", () => {
+  mainView.hidden = false;
+  settingsView.hidden = true;
 });
 
 saveBtn.addEventListener("click", async () => {
