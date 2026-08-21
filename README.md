@@ -28,14 +28,18 @@ Written with **Tauri** (Rust backend + vanilla JS frontend).
 
 The build is a universal binary (Apple Silicon + Intel), so a single DMG works on both.
 
-Because the app is unsigned, you may need to right-click it and choose **Open** the first time.
+Because the app is unsigned, you may need to right-click it and choose **Open** the first time, or run this command
+```
+xattr -cr "/Applications/annoying-break-timer.app" 
+```
+
+### Run / build
 
 Building a universal binary requires both Rust targets installed, run this before first build:
 ```zsh
 rustup target add aarch64-apple-darwin x86_64-apple-darwin
 ```
 
-### Run / rebuild
 ```zsh
 npm run tauri dev      # development mode
 npm run build          # release .app + .dmg (universal binary)
