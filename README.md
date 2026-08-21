@@ -23,14 +23,20 @@ Written with **Tauri** (Rust backend + vanilla JS frontend).
 ![Tray icon](doc/tray.png)
 
 ### Built artifacts
-- App bundle: `./src-tauri/target/release/bundle/macos/annoying-break-timer.app`
-- Installer DMG: `./src-tauri/target/release/bundle/dmg/annoying-break-timer_0.1.0_aarch64.dmg`
+- App bundle: `./src-tauri/target/universal-apple-darwin/release/bundle/macos/annoying-break-timer.app`
+- Installer DMG: `./src-tauri/target/universal-apple-darwin/release/bundle/dmg/annoying-break-timer_0.1.0_universal.dmg`
+
+The build is a universal binary (Apple Silicon + Intel), so a single DMG works on both.
 
 Because the app is unsigned, you may need to right-click it and choose **Open** the first time.
+
+Building a universal binary requires both Rust targets installed, run this before first build:
+```zsh
+rustup target add aarch64-apple-darwin x86_64-apple-darwin
+```
 
 ### Run / rebuild
 ```zsh
 npm run tauri dev      # development mode
-npm run build          # release .app + .dmg
+npm run build          # release .app + .dmg (universal binary)
 ```
-
